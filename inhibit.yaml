@@ -1,0 +1,15 @@
+---
+cpu_night: # turn off LA night alerts
+  find_field: create_time
+  find_regexp: .* 0[0-8]:.*
+  main_field: event
+  main_regexp: (NodeHostCPUUtilisation|NodeLAHigh|NodeIoDisk|NodeLatencyWriteDisk)
+  dependent: false
+
+off_all_if_host_down: # Turns off all alerts from the host if it is unavailable
+  find_field: event
+  find_regexp: (ExporterDown|NodeDown)
+  link_field: resource
+  main_field: event
+  main_regexp: .*
+  dependent: true

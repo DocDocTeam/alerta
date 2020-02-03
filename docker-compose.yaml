@@ -1,0 +1,41 @@
+version: '2.1'
+services:
+  web:
+    image: alerta/alerta-web
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - db
+    volumes:
+      - ./telegram.j2:/app/telegram.j2
+      - ./inhibit.yaml:/app/inhibit.yaml
+      - ./alerta_telegram.py:/venv/lib/python3.6/site-packages/alerta_telegram.py
+      - ./telegram.py:/venv/lib/python3.6/site-packages/alerta/webhooks/telegram.py
+    environment:
+      - BASE_URL=/api
+      - DASHBOARD_URL=https://alerta.example.com
+      - USE_PROXYFIX=True
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/monitoring
+      - AUTH_REQUIRED=True
+      - ADMIN_USERS=user@example.com
+      - PLUGINS=reject,blackout,normalise,enhance,telegram
+      - COMPOSE_PROJECT_NAME=alerta
+      - TELEGRAM_TOKEN=<your options>
+      - TELEGRAM_CHAT_ID=<your options>
+      - TELEGRAM_TEMPLATE=/app/telegram.j2
+      - TELEGRAM_SOUND_NOTIFICATION_SEVERITY=security,critical,major
+      - TELEGRAM_WEBHOOK_URL=https://alerta.example.com/api/webhooks/telegram?api-key=<your options>
+      - BLACKOUT_DURATION=86400
+      - AUTH_PROVIDER=google
+      - OAUTH2_CLIENT_ID=<your options>
+      - OAUTH2_CLIENT_SECRET=<your options>
+    restart: always
+  db:
+    image: postgres
+    volumes:
+      - /opt/prometheus/alerta/pg-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: monitoring
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    restart: always
