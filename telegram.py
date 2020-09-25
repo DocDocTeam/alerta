@@ -16,23 +16,30 @@ def send_message_reply(alert: Alert, action: str, user: str, data: JSON) -> None
     try:
         import telepot  # type: ignore
     except ImportError:
-        current_app.logger.warning("You have configured Telegram but 'telepot' client is not installed", exc_info=True)
+        current_app.logger.warning(
+            "You have configured Telegram but 'telepot' client is not installed", exc_info=True)
         return
 
     try:
-        bot_id = os.environ.get('TELEGRAM_TOKEN') or current_app.config.get('TELEGRAM_TOKEN')
-        dashboard_url = os.environ.get('DASHBOARD_URL') or current_app.config.get('DASHBOARD_URL')
-        chat_id = os.environ.get('TELEGRAM_CHAT_ID') or current_app.config.get('TELEGRAM_CHAT_ID')
+        bot_id = os.environ.get(
+            'TELEGRAM_TOKEN') or current_app.config.get('TELEGRAM_TOKEN')
+        dashboard_url = os.environ.get(
+            'DASHBOARD_URL') or current_app.config.get('DASHBOARD_URL')
+        chat_id = os.environ.get(
+            'TELEGRAM_CHAT_ID') or current_app.config.get('TELEGRAM_CHAT_ID')
         bot = telepot.Bot(bot_id)
 
         # message info
         message_id = data['callback_query']['message']['message_id']
         message_log = data['callback_query']['message']['text']
 
-        current_app.logger.warning("DEBUG_tlg: message_log = " + message_log, exc_info=True)
+        current_app.logger.warning(
+            "DEBUG_tlg: message_log = " + message_log, exc_info=True)
 
         # process buttons for reply text
-        inline_keyboard, reply = [], 'Алерт {alert} переведен в статус *{status}*!'  # type: List[List[JSON]], str
+        # type: List[List[JSON]], str
+        inline_keyboard, reply = [
+        ], 'Алерт {alert} переведен в статус *{status}*!'
 
         actions = ['watch', 'unwatch']
         if action in actions:
@@ -40,23 +47,28 @@ def send_message_reply(alert: Alert, action: str, user: str, data: JSON) -> None
             next_action = actions[(actions.index(action) + 1) % len(actions)]
             inline_keyboard = [
                 [
-                    {'text': next_action.capitalize(), 'callback_data': '/{} {}'.format(next_action, alert.id)},
-                    {'text': 'Ack', 'callback_data': '{} {}'.format('/ack', alert.id)},
-                    {'text': 'Close', 'callback_data': '{} {}'.format('/closed', alert.id)}
+                    {'text': next_action.capitalize(
+                    ), 'callback_data': '/{} {}'.format(next_action, alert.id)},
+                    {'text': 'Ack', 'callback_data': '{} {}'.format(
+                        '/ack', alert.id)},
+                    {'text': 'Close', 'callback_data': '{} {}'.format(
+                        '/closed', alert.id)}
                 ]
             ]
 
         # format message response
         alert_short_id = alert.get_id(short=True)
         alert_url = '{}/#/alert/{}'.format(dashboard_url, alert.id)
-        reply = reply.format(alert='[{}]({})'.format(alert_short_id, alert_url), status=action, user=user)
+        reply = reply.format(alert='[{}]({})'.format(
+            alert_short_id, alert_url), status=action, user=user)
         message = '{alert} *{level} - {event} on {resouce}*\n{log}\n{reply}'.format(
             alert='[{}]({})'.format(alert_short_id, alert_url), level=alert.severity.capitalize(),
-            event=alert.event, resouce=alert.resource, log=message_log, reply=reply)
+            event=alert.event, resource=alert.resource, log=message_log, reply=reply)
 
         message = '{log}\n\n{reply}'.format(log=message_log, reply=reply)
 
-        current_app.logger.warning("DEBUG_tlg: message = " + message, exc_info=True)
+        current_app.logger.warning(
+            "DEBUG_tlg: message = " + message, exc_info=True)
 
         # send message
         bot.editMessageText(
@@ -64,11 +76,12 @@ def send_message_reply(alert: Alert, action: str, user: str, data: JSON) -> None
             text=message,
             parse_mode='Markdown',
             disable_web_page_preview=True
-#,
-#            reply_markup={'inline_keyboard': inline_keyboard}
+            # ,
+            #            reply_markup={'inline_keyboard': inline_keyboard}
         )
     except Exception:
-        current_app.logger.warning('Error sending reply message', exc_info=True)
+        current_app.logger.warning(
+            'Error sending reply message', exc_info=True)
 
 
 class TelegramWebhook(WebhookBase):
@@ -81,24 +94,26 @@ class TelegramWebhook(WebhookBase):
 
         if 'callback_query' in payload:
             author = payload['callback_query']['from']
-            user = '{} {}'.format(author.get('first_name'), author.get('last_name'))
+            user = '{} {}'.format(author.get('first_name'),
+                                  author.get('last_name'))
             command, alert_id = payload['callback_query']['data'].split(' ', 1)
 
             customers = g.get('customers', None)
             alert = Alert.find_by_id(alert_id, customers=customers)
             action = command.lstrip('/')
-            if not alert and action != 'blackout':
+            if not alert:
                 return jsonify(status='error', message='alert not found for Telegram message')
 
             if action in ['close']:
-                alert.set_status(status='closed', timeout=10, text='Closed via Telegram')
+                alert.set_status(status='closed', timeout=10,
+                                 text='Closed via Telegram')
             elif action in ['open', 'ack', 'closed']:
-                alert.set_status(status=action, text='status change via Telegram')
+                alert.set_status(
+                    status=action, text='status change via Telegram')
             elif action in ['watch', 'unwatch']:
                 alert.untag(tags=['{}:{}'.format(action, user)])
-            elif action == 'blackout':
-                environment, resource, event = command.split('|', 2)
-                blackout = Blackout(environment, resource=resource, event=event)
+                blackout = Blackout(
+                    'Production', resource=alert.resource, event=alert.event)
                 blackout.create()
 
             send_message_reply(alert, action, user, payload)
@@ -111,4 +126,3 @@ class TelegramWebhook(WebhookBase):
             return jsonify(status='ok')
         else:
             return jsonify(status='ok', message='no callback_query in Telegram message')
-

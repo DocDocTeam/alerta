@@ -1,23 +1,25 @@
-version: '2.1'
+version: "2.1"
 services:
   web:
-    image: alerta/alerta-web
+    image: alerta/alerta-web:7.4.6
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:9084:8080"
     depends_on:
       - db
     volumes:
-      - ./telegram.j2:/app/telegram.j2
-      - ./inhibit.yaml:/app/inhibit.yaml
-      - ./alerta_telegram.py:/venv/lib/python3.6/site-packages/alerta_telegram.py
-      - ./telegram.py:/venv/lib/python3.6/site-packages/alerta/webhooks/telegram.py
+      - /var/local/docdoc/docker/alerta/telegram.j2:/app/telegram.j2
+      - /var/local/docdoc/docker/alerta/inhibit.yaml:/app/inhibit.yaml
+      - /var/local/docdoc/docker/alerta/alertad.conf:/app/alertad.conf
+      - /var/local/docdoc/docker/alerta/alerta_enhance.py:/venv/lib/python3.7/site-packages/alerta_enhance.py
+      - /var/local/docdoc/docker/alerta/alerta_telegram.py:/venv/lib/python3.7/site-packages/alerta_telegram.py
+      - /var/local/docdoc/docker/alerta/telegram.py:/venv/lib/python3.7/site-packages/alerta/webhooks/telegram.py
     environment:
+      #      - DEBUG=True+
       - BASE_URL=/api
       - DASHBOARD_URL=https://alerta.example.com
       - USE_PROXYFIX=True
       - DATABASE_URL=postgres://postgres:postgres@db:5432/monitoring
       - AUTH_REQUIRED=True
-      - ADMIN_USERS=user@example.com
       - PLUGINS=reject,blackout,normalise,enhance,telegram
       - COMPOSE_PROJECT_NAME=alerta
       - TELEGRAM_TOKEN=<your options>

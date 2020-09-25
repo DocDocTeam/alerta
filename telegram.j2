@@ -1,22 +1,22 @@
-{% if status == "open" %}❌*Detected* problem on: *{{ resource }}*
-{% elif status == "closed" %}✅*Solved* problem on: *{{ resource }}*
+{% if status == "open" %}❌*Обнаружена* проблема на: *{{ resource }}*
+{% elif status == "closed" %}✅*Решена* проблема на: *{{ resource }}*
 {% endif %}
-* Problem parameters: *
+*Параметры проблемы:*
   alertname: `{{ event | replace("_","\_") }}`
   resource: `{{ resource }}`{% if service |length %}
   service: {{ service }}{% endif %}
-  description: {{ text }}
-{% if value|length and value!='--' %}  Value: {{ value }}
-{% endif %}{% if severity == 'major' -%}  Priority: *High* 🆘
-{% elif severity == "critical" %}  Priority: *Blocker* 🚫
-{% elif severity == "warning" %}  Priority: *Warning* ❗
-{% else %}  State: *{{ severity.capitalize() }}* 👍
+  Описание: {{ text }}
+{% if value|length and value!='--' %}  Значение: {{ value }}
+{% endif %}{% if severity == 'major' -%}  Приоритет: *High* 🆘
+{% elif severity == "critical" %}  Приоритет: *Blocker* 🚫
+{% elif severity == "warning" %}  Приоритет: *Warning* ❗
+{% else %}  Сосстояние: *{{ severity.capitalize() }}* 👍
 {% endif %}
-*Start time:* {{ create_time.strftime('%d-%m-%Y %H:%H') }}
-{% if status == "closed" -%}*Solution time:* {{ update_time.strftime('%d-%m-%Y %H:%M') }}
+*Время начала:* {{ create_time.strftime('%d-%m-%Y %H:%H') }}
+{% if status == "closed" -%}*Время решения:* {{ update_time.strftime('%d-%m-%Y %H:%M') }}
 {% endif %}{% if status == "open" -%}
 {% if attributes.runbook|length -%}*RunBook:* [📗 Book]({{ attributes.runbook | replace(")","\)") }}){% else %}*RunBook:* [📗 Book]({{ attributes.runBookUrl | replace(")","") | replace("(","") }}){% endif %}
-{% if attributes.grurls|length -%}*Dashboard:* [📈 Grafana]({{ attributes.grurls }})
-{% elif attributes.ruleUrl|length -%}*Dashboard:* [📈 Grafana]({{ attributes.ruleUrl }})
-{% elif attributes.incident_url|length -%}*Incident:* [📊 NewRelic]({{ attributes.incident_url }}){% endif %}
+{% if attributes.grurls|length -%}*Дашборд:* [📈 Grafana]({{ attributes.grurls }})
+{% elif attributes.ruleUrl|length -%}*Дашборд:* [📈 Grafana]({{ attributes.ruleUrl }})
+{% elif attributes.incident_url|length -%}*Инцедент:* [📊 NewRelic]({{ attributes.incident_url }}){% endif %}
 {% endif %}

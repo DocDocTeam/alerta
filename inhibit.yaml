@@ -1,15 +1,35 @@
 ---
-cpu_night: # turn off LA night alerts
+# find_field, find_regexp - поле и регулярка для поиска алертов, где искать зависит от настройки dependent
+# main_field, main_regexp - дополнителная проверка найденный связанных алертов в совственных полях (только для dependent true)
+# dependent - глушение происходит на основе уже существующих алертов, связь происходит по совпадения в поле link_field
+
+cpu_night: #выключает алерты LA на ночь
   find_field: create_time
-  find_regexp: .* 0[0-8]:.*
+  find_regexp: .* 0[0-9]:.*
   main_field: event
-  main_regexp: (NodeHostCPUUtilisation|NodeLAHigh|NodeIoDisk|NodeLatencyWriteDisk)
+  main_regexp: (NodeHostCPUUtilisation|NodeLAHigh|NodeIoDisk|NodeLatencyWriteDisk|NodeLatencyReadDisk)
   dependent: false
 
-off_all_if_host_down: # Turns off all alerts from the host if it is unavailable
+off_all_if_host_down: # Выключает все оповещения с хоста если он недоступен
   find_field: event
   find_regexp: (ExporterDown|NodeDown)
   link_field: resource
   main_field: event
   main_regexp: .*
   dependent: true
+
+off_double_rabbit: # Исключает двойные алерты на очереди сообщений от rabbit
+  find_field: event
+  find_regexp: RabbitMQMany.*
+  link_field: event
+  main_field: resource
+  main_regexp: .*
+  dependent: true
+
+not_allert_hosts: #хосты, которы не надо алертить
+  find_field: resource
+  find_regexp: gce-ibolit-mediaserver-test.*
+  link_field: resource
+  main_field: event
+  main_regexp: .*
+  dependent: false
